@@ -1,0 +1,8 @@
+{
+  "name": "wula/wechat",
+  "type": "wula-module",
+  "require": {
+	"wula/wula-installer": "^1.0",
+    "overtrue/wechat": "~4.0"
+  }
+}
