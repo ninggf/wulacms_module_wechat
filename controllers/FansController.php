@@ -8,20 +8,23 @@
 namespace wechat\controllers;
 
 use backend\classes\IFramePageController;
+use wechat\classes\model\Fans;
 use wechat\classes\model\WxAccount;
 use wulaphp\io\Ajax;
 
-class AccountController extends IFramePageController {
+class FansController extends IFramePageController {
 	public function index() {
 		$data = [];
 
 		return $this->render($data);
 	}
 
-	public function data($page = 1, $page_size = 20, $sort_name = 'id', $sort_type = 'd') {
+	public function data() {
+		$page_size       = rqst('pager[size]', 20);
+		$page            = rqst('pager[page]', 1);
 		$q               = rqst('q', '');
 		$ret             = [];
-		$wx_ac           = new WxAccount();
+		$wx_ac           = new Fans();
 		$cond            = [];
 		$cond['deleted'] = 0;
 		if ($q) {
@@ -29,7 +32,7 @@ class AccountController extends IFramePageController {
 			$where1['||wx_nick LIKE'] = '%' . $q . '%';
 			$cond[]                   = $where1;
 		}
-		$query = $wx_ac->select('*')->where($cond)->limit(($page - 1) * $page_size, $page_size)->sort($sort_name, $sort_type);
+		$query = $wx_ac->select('*')->where($cond)->limit(($page - 1) * $page_size, $page_size)->desc('id');
 		$count = $query->count();
 		$rows  = $query->toArray();
 
