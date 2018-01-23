@@ -7,7 +7,7 @@
         <td>{$row.id}</td>
         <td>{$row.wx_name}</td>
         <td>{$row.wx_nick}</td>
-        <td>{$row.wx_type}</td>
+        <td>{$row.wx_app_id}</td>
         <td>{$row.wx_token}</td>
         <td>{$row.remark}</td>
         <td class="text-right">

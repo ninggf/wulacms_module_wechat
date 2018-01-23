@@ -80,7 +80,7 @@
         <div class="layui-form-item">
             <label class="layui-form-label">帐号类型</label>
             <div class="layui-input-block">
-                <input type="radio" name="wx_type" value="0" title="服务号" {if $row.wx_type==0} checked {/if} >
+                <input type="radio" name="wx_type" value="0" title="订阅号" {if $row.wx_type==0} checked {/if} >
                 <input type="radio" name="wx_type" value="1" title="服务号" {if $row.wx_type==1} checked {/if} >
                 <input type="radio" name="wx_type" value="3" title="私人订阅号" {if $row.wx_type==3} checked {/if} >
             </div>

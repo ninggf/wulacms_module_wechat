@@ -58,7 +58,7 @@ class AccountController extends IFramePageController {
 		$ret                 = true;
 		$data['update_time'] = time();
 		if ($id) {
-			$et = $wx_ac->up_acc($data);
+			$ret = $wx_ac->up_acc($data);
 		} else {
 			$data['create_time'] = time();
 			unset($data['id']);
