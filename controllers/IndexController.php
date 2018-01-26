@@ -11,7 +11,7 @@ use backend\classes\IFramePageController;
 
 class IndexController extends IFramePageController {
 	public function index(){
-		echo '';
+//		echo '';
 		//return view();
 //		return $this->render();
 	}

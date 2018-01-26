@@ -10,8 +10,16 @@ namespace wechat\controllers;
 use backend\classes\IFramePageController;
 use wechat\classes\model\WxAccount;
 use wulaphp\io\Ajax;
+use wulaphp\io\Response;
 
 class AccountController extends IFramePageController {
+	function __construct(\wulaphp\app\Module $module) {
+		parent::__construct($module);
+		if(!$this->passport->cando('acc:wechat')){
+			Response::respond(404);
+		  }
+	}
+
 	public function index() {
 		$data = [];
 

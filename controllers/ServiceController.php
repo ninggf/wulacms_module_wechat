@@ -30,7 +30,7 @@ class ServiceController extends Controller {
 		$app =new Application($config);
 		$app->server->setMessageHandler(function ($msg){
 			if($msg){
-				return 'fk,关注我,点我!';
+				return '谢谢关注!';
 			}else{
 				return '谢谢关注!';
 			}

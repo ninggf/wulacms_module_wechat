@@ -39,11 +39,11 @@ class WechatModule extends CmfModule {
 				$list->icon        = '&#xe63e;';
 				$list->data['url'] = App::url('wechat/account');
 			}
-			if ($passport->cando('fan:wechat')) {
-				$list              = $menu->getMenu('fans', '公众号粉丝');
-				$list->icon        = '&#xe630;';
-				$list->data['url'] = App::url('wechat/fans');
-			}
+//			if ($passport->cando('fan:wechat')) {
+//				$list              = $menu->getMenu('fans', '公众号粉丝');
+//				$list->icon        = '&#xe630;';
+//				$list->data['url'] = App::url('wechat/fans');
+//			}
 			if ($passport->cando('dc:wechat')) {
 				$list              = $menu->getMenu('dc', '数据统计');
 				$list->icon        = '&#xe74d;';
@@ -60,7 +60,7 @@ class WechatModule extends CmfModule {
 	public static function initAcl($manager) {
 		$acl = $manager->getResource('wechat', '微信', 'm');
 		$acl->addOperate('acc', '公众号管理');
-		$acl->addOperate('fan', '公众号粉丝');
+//		$acl->addOperate('fan', '公众号粉丝');
 		$acl->addOperate('dc', '数据统计与分析');
 	}
 }

@@ -10,6 +10,8 @@ namespace wechat\classes\model;
 use wulaphp\db\Table;
 
 class Dc extends Table {
+	public  $table = 'wx_stat_log';
+
 	/**
 	 * @param  array $data
 	 *
@@ -45,16 +47,24 @@ class Dc extends Table {
 	}
 
 	/**
-	 * @param  array $data
+	 * 删除
 	 *
-	 * @return  bool $ret
+	 * @param int $id
+	 *
+	 * @return  bool
 	 */
-	public function del($data) {
-		$ret = false;
-		if (isset($data['id'])) {
-			$ret = $this->up($data);
+	public function del($id = 0) {
+		$id = (int)$id;
+		if ($id) {
+			$data                = [];
+			$data['update_time'] = time();
+			$data['deleted']     = 1;
+			$data['remark']      = date('Y-m-d H:i:s') . ' adm opt';
+
+			return $this->update($data, ['id' => $id]);
 		}
 
-		return $ret;
+		return false;
+
 	}
 }

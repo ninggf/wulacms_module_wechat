@@ -19,6 +19,9 @@
                                 {*<input type="text" name="city" class="input-sm form-control" placeholder="{'城市'|t}"/>*}
                             {*</div>*}
                             <div class="input-group input-group-sm">
+                                <input type="text" name="date" class="input-sm form-control" placeholder="{'日期(2014-01-05)'|t}"/>
+                            </div>
+                            <div class="input-group input-group-sm">
                                 <input type="text" name="wx_ac" class="input-sm form-control" placeholder="{'公众号'|t}"/>
                             </div>
                             <div class="input-group input-group-sm">
@@ -32,7 +35,7 @@
             </header>
             <section class="w-f bg-white">
                 <div class="table-responsive">
-                    <table id="core-admin-table" data-auto data-table="{'wechat/fans/data'|app}" data-sort="id,d"
+                    <table id="core-admin-table" data-auto data-table="{'wechat/dc/data'|app}" data-sort="id,d"
                            style="min-width: 800px">
                         <thead>
                         <tr>
@@ -40,12 +43,13 @@
                                 <input type="checkbox" class="grp"/>
                             </th>
                             <th width="60" data-sort="id,d">ID</th>
-                            <th width="100" data-sort="wx_name,a">昵称</th>
-                            <th width="80" >头像</th>
-                            <th width="100">区域</th>
-                            <th width="100">标签</th>
-                            <th width="100">关注状态</th>
-                            <th width="100">备注</th>
+                            <th width="100" data-sort="wx_name,a">公众号</th>
+                            <th width="100" >统计日期</th>
+                            <th width="100">送达总数</th>
+                            <th width="100">新增粉丝</th>
+                            <th width="100">取关粉丝</th>
+                            <th width="100">粉丝总数</th>
+                            <th width="100">创建时间</th>
                             <th></th>
                         </tr>
                         </thead>
