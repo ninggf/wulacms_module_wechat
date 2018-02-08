@@ -15,9 +15,9 @@ use wulaphp\io\Response;
 class AccountController extends IFramePageController {
 	function __construct(\wulaphp\app\Module $module) {
 		parent::__construct($module);
-		if(!$this->passport->cando('acc:wechat')){
+		if (!$this->passport->cando('acc:wechat')) {
 			Response::respond(404);
-		  }
+		}
 	}
 
 	public function index() {
@@ -60,11 +60,16 @@ class AccountController extends IFramePageController {
 
 	//保存
 	public function save() {
-		$data                = rqsts(['wx_name', 'id', 'wx_nick', 'wx_app_id', 'wx_token', 'wx_app_ecret', 'wx_en_key', 'remark', 'status', 'wx_type']);
+		$data                = rqsts(['wx_name', 'type', 'id', 'wx_nick', 'wx_app_id', 'wx_token', 'wx_app_ecret', 'wx_en_key', 'remark', 'status', 'wx_type']);
 		$id                  = (int)$data['id'];
+		$type                = (int)$data['type'];
 		$wx_ac               = new WxAccount();
 		$ret                 = true;
 		$data['update_time'] = time();
+		//
+		if ($type == 1) {
+			return Ajax::success();
+		}
 		if ($id) {
 			$ret = $wx_ac->up_acc($data);
 		} else {
@@ -75,7 +80,6 @@ class AccountController extends IFramePageController {
 
 		if ($ret) {
 			return Ajax::success();
-			//Ajax::reload('#core-admin-table','操作成功!');
 		} else {
 			return Ajax::error('操作失败!');
 		}

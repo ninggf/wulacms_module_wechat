@@ -5,7 +5,12 @@
                 <div class="col-sm-6 m-b-xs">
                     <a href="{'wechat/account/edit'|app}/0" class="btn btn-sm btn-success edit-admin" data-ajax="dialog"
                        data-area="800px,400px" data-title="新的公众号">
-                        <i class="fa fa-plus"></i> 新加公众号
+                        <i class="fa fa-plus"></i> 新加公众号(开发者模式)
+                    </a>
+                    <a href="{'wechat/service/auth_link'|app}" class="btn btn-sm btn-info "
+                       target="_blank"
+                       >
+                        <i class="fa fa-plus"></i> 新加公众号(授权模式)
                     </a>
                 </div>
                 <div class="col-sm-6 m-b-xs text-right">
@@ -31,10 +36,11 @@
                         </th>
                         <th width="60" data-sort="id,d">ID</th>
                         <th width="100" data-sort="wx_name,a">公众号名称</th>
-                        <th width="100">简称</th>
+                        <th width="180">简称</th>
                         <th width="100">微信appID</th>
-                        <th width="100">令牌</th>
-                        <th width="100">备注</th>
+                        <th width="100">公众号类型</th>
+                        <th width="100">开发类型</th>
+                        <th width="100">创建时间</th>
                         <th></th>
                     </tr>
                     </thead>
@@ -61,7 +67,6 @@
 				};
 			});
 
-		})
-		;
+		});
     </script>
 {/literal}

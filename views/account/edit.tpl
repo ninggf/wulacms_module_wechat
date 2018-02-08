@@ -49,27 +49,6 @@
             </div>
         </div>
 
-        {*<div class="layui-form-item">*}
-        {*<label class="layui-form-label">选择框</label>*}
-        {*<div class="layui-input-block">*}
-        {*<select name="city" lay-verify="required">*}
-        {*<option value=""></option>*}
-        {*<option value="0">北京</option>*}
-        {*<option value="1">上海</option>*}
-        {*<option value="2">广州</option>*}
-        {*<option value="3">深圳</option>*}
-        {*<option value="4">杭州</option>*}
-        {*</select>*}
-        {*</div>*}
-        {*</div>*}
-        {*<div class="layui-form-item">*}
-        {*<label class="layui-form-label">复选框</label>*}
-        {*<div class="layui-input-block">*}
-        {*<input type="checkbox" name="like[write]" title="写作">*}
-        {*<input type="checkbox" name="like[read]" title="阅读" checked>*}
-        {*<input type="checkbox" name="like[dai]" title="发呆">*}
-        {*</div>*}
-        {*</div>*}
         <div class="layui-form-item">
             <label class="layui-form-label">启用</label>
             <div class="layui-input-block">
@@ -86,6 +65,7 @@
             </div>
         </div>
         <input type="hidden" name="id" value="{$row.id}"/>
+        <input type="hidden" name="type" value="{$row.type}"/>
     </form>
 </div>
 
