@@ -133,10 +133,10 @@ class ServiceController extends Controller {
 
 	public function info() {
 		$openPlatform = $this->open_plat_form;
-		$appId        = 'wx3ffe452161144cb0';
-		$refreshToken = 'refreshtoken@@@B8iJ4nYaXywZKPUDNIY83rKImLU2jjmhGuBJ0qQJHEc';
-		$wx_ac_info   = $openPlatform->getAuthorizer($appId);
-		echo json_encode($wx_ac_info);
+//		$appId        = 'wx3ffe452161144cb0';
+//		$refreshToken = 'refreshtoken@@@B8iJ4nYaXywZKPUDNIY83rKImLU2jjmhGuBJ0qQJHEc';
+//		$wx_ac_info   = $openPlatform->getAuthorizer($appId);
+//		echo json_encode($wx_ac_info);
 		//		$officialAccount = $openPlatform->officialAccount($appId, $refreshToken);
 		//		$bg_date         = '2016-08-05';
 		//		$end_date        = '2016-08-05';
