@@ -1,103 +1,65 @@
 <?php
-/**
- * @desc  .
- * @author: FLY
- * @Date  : 08/01/2018 14:08
+/*
+ * This file is part of wulacms.
+ *
+ * (c) Leo Ning <windywany@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace wechat\controllers;
 
 use backend\classes\IFramePageController;
-use wechat\classes\model\WxAccount;
-use wulaphp\io\Ajax;
-use wulaphp\io\Response;
+use weixin\classes\WxAccount;
+use wulaphp\app\App;
 
+/**
+ * Class AccountController
+ * @package wechat\controllers
+ * @acl     m:wx
+ */
 class AccountController extends IFramePageController {
-	function __construct(\wulaphp\app\Module $module) {
-		parent::__construct($module);
-		if (!$this->passport->cando('acc:wechat')) {
-			Response::respond(404);
-		}
-	}
+    public function index() {
+        $types             = WxAccount::TYPES;
+        $data['types']     = $types;
+        $data['plateform'] = 'PL';
+        $data['grantURL']  = App::cfg('openPlatform.url@weixin') . App::url('wechat/service/grant');
 
-	public function index() {
-		$data = [];
+        return $this->render($data);
+    }
 
-		return $this->render($data);
-	}
+    public function data($type = '', $wxid = '', $authed = '', $count = '') {
+        $where             = [];
+        $query             = App::db()->select('*')->from('{wx_account}')->page()->sort();
+        $where['platform'] = 'PL';
 
-	public function data($page = 1, $page_size = 20, $sort_name = 'id', $sort_type = 'd') {
-		$q               = rqst('q', '');
-		$ret             = [];
-		$wx_ac           = new WxAccount();
-		$cond            = [];
-		$cond['deleted'] = 0;
-		if ($q) {
-			$where1['wx_name LIKE']   = '%' . $q . '%';
-			$where1['||wx_nick LIKE'] = '%' . $q . '%';
-			$cond[]                   = $where1;
-		}
-		$query = $wx_ac->select('*')->where($cond)->limit(($page - 1) * $page_size, $page_size)->sort($sort_name, $sort_type);
-		$count = $query->count();
-		$rows  = $query->toArray();
+        if ($type) {
+            $where['type'] = $type;
+        }
 
-		$ret['count'] = $count;
-		$ret['rows']  = $rows;
+        if ($wxid) {
+            $where['wxid'] = $wxid;
+        }
 
-		return view($ret);
-	}
+        if (is_numeric($authed)) {
+            $where['authed'] = intval($authed);
+        }
 
-	//编辑或新增
-	public function edit($id = 0) {
-		$data = [];
-		if ($id) {
-			$wx_ac       = new WxAccount();
-			$data['row'] = $wx_ac->get($id);
-		}
+        $query->where($where);
+        $rows  = $query->toArray();
+        $total = '';
+        if ($count) {
+            $total = $query->total('id');
+        }
 
-		return view($data);
-	}
+        $data['total']    = $total;
+        $data['rows']     = $rows;
+        $data['types']    = WxAccount::TYPES;
+        $data['base_url'] = App::cfg('base_url@wx');
+        $data['modes']    = ['T' => '明文模式', 'C' => '兼容模式', 'S' => '安全模式'];
+        $data['canEdit']  = $this->passport->cando('e:wx/account');
 
-	//保存
-	public function save() {
-		$data                = rqsts(['wx_name', 'type', 'id', 'wx_nick', 'wx_app_id', 'wx_token', 'wx_app_ecret', 'wx_en_key', 'remark', 'status', 'wx_type']);
-		$id                  = (int)$data['id'];
-		$type                = (int)$data['type'];
-		$wx_ac               = new WxAccount();
-		$ret                 = true;
-		$data['update_time'] = time();
-		//
-		if ($type == 1) {
-			return Ajax::success();
-		}
-		if ($id) {
-			$ret = $wx_ac->up_acc($data);
-		} else {
-			$data['create_time'] = time();
-			unset($data['id']);
-			$ret = $wx_ac->create($data);
-		}
-
-		if ($ret) {
-			return Ajax::success();
-		} else {
-			return Ajax::error('操作失败!');
-		}
-	}
-
-	//删除
-	public function del($id = 0) {
-		$id  = (int)$id;
-		$ret = true;
-		if ($id) {
-			$wx_ac = new WxAccount();
-			$ret   = $wx_ac->del($id);
-		}
-		if ($ret) {
-			return Ajax::reload('#core-admin-table', 'ok');
-		} else {
-
-			return Ajax::error('操作失败!');
-		}
-	}
+        return view($data);
+    }
 }

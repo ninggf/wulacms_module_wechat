@@ -8,143 +8,262 @@
 namespace wechat\controllers;
 
 use EasyWeChat\Factory;
-use wechat\classes\model\WxAccount;
-use wechat\classes\model\WxThAccount;
-use wulaphp\app\Module;
+use EasyWeChat\OpenPlatform\Server\Guard;
+use wechat\model\WxGrant;
+use weixin\classes\form\WxAccountForm;
+use weixin\classes\WxAccount;
+use weixin\classes\WxCache;
+use wulaphp\app\App;
 use wulaphp\mvc\controller\Controller;
 
 class ServiceController extends Controller {
-	protected $open_plat_form;
+    /**@var \EasyWeChat\OpenPlatform\Application */
+    private $open_plat_form;
+    private $baseURL;
+    private $cache;
 
-	function __construct(\wulaphp\app\Module $module) {
-		parent::__construct($module);
-		$config               = ['app_id' => 'wxcf10ab1fcbabe367', 'secret' => '6eac08eb3d0b2e8121504cb2581f0bcf', 'token' => 'jjdedfdfgr', 'aes_key' => 'fdghthhh457544frgeger25767fewfrftfsdswefref',];
-		$open_platform        = Factory::openPlatform($config);
-		$this->open_plat_form = $open_platform;
-	}
+    public function beforeRun($action, $refMethod) {
+        parent::beforeRun($action, $refMethod);
+        $config        = App::acfg('openPlatform@weixin');
+        $this->baseURL = $config['url'];
+        unset($config['url']);
+        $config               = array_merge($config, [
+            'response_type' => 'array',
+            'log'           => [
+                'level' => 'error',
+                'file'  => LOGS_PATH . 'wechat.opl.log',
+            ],
+            'http'          => [
+                'max_retries' => 2,
+                'retry_delay' => 1000,
+                'timeout'     => 15
+            ]
+        ]);
+        $this->open_plat_form = Factory::openPlatform($config);
+        try {
+            $this->cache = new WxCache();
+            $this->open_plat_form->rebind('cache', $this->cache);
+        } catch (\Exception $e) {
+            // 使用默认缓存
+        }
+    }
 
-	public function index($ac = '', $opt = 'callback') {
-		$ac = trim($ac);
-		//		$wx_ac  = new WxAccount();
-		//		$ac_info=$wx_ac->select('*')->where(['wx_nick'=>$ac])->limit(0,1)->get();
-		//		$app->server->setMessageHandler(function ($msg){
-		//			if($msg){
-		//				return '谢谢关注!';
-		//			}else{
-		//				return '谢谢关注!';
-		//			}
-		//		});
-		//		$openPlatform->server->setMessageHandler(function($event) {
-		//			switch ($event->InfoType) {
-		//				case 'authorized':
-		//					break;
-		//				case 'unauthorized':
-		//					break;
-		//				case 'updateauthorized':
-		//					break;
-		//				case 'component_verify_ticket':
-		//					break;
-		//			}
-		//		});
-		//		$openPlatform = $this->open_plat_form;
-		//		return $openPlatform->server->serve()->send();
+    /**
+     * 公众号或小程序消息和事件推送
+     *
+     * @param string $appid 公众号或小程序
+     * @param string $opt   目前只有callback
+     *
+     * @return string
+     * @throws
+     */
+    public function index($appid, $opt = '') {
+        if ($opt == 'callback') {
+            $appid           = trim($appid);
+            $openPlatform    = $this->open_plat_form;
+            $officialAccount = $openPlatform->officialAccount($appid);
+            if ($this->cache) {
+                $officialAccount->rebind('cache', $this->cache);
+            }
+            $server = $officialAccount->server;
+            WxAccount::onEvent($server, $appid);
+            @ob_start();
+            $server->serve()->send();
 
-		$openPlatform    = $this->open_plat_form;
-		$officialAccount = $openPlatform->officialAccount($ac);
-		$server          = $officialAccount->server;
+            return ob_get_clean();
+        }
 
-		$server->push(function () {
-			return '谢谢关注!';
-		});
+        return null;
+    }
 
-		return $server->serve()->send();
-	}
+    /**
+     * 用于接收取消授权通知、授权成功通知、授权更新通知，也用于接收ticket，ticket是验证平台方的重要凭据。
+     *
+     * @see callback
+     * @return string
+     * @throws
+     */
+    public function msg() {
+        return $this->callback();
+    }
 
-	//授权事件接收URL
-	public function msg() {
-		$openPlatform = $this->open_plat_form;
+    /**
+     * 用于接收取消授权通知、授权成功通知、授权更新通知，也用于接收ticket，ticket是验证平台方的重要凭据。
+     *
+     * @return string
+     * @throws
+     */
+    public function callback() {
+        $openPlatform = $this->open_plat_form;
+        @ob_start();
+        $server = $openPlatform->server;
+        // 处理授权成功事件
+        $server->push(function ($message) {
+            $this->authorized($message['AuthorizationCode'], false);
 
-		return $openPlatform->server->serve()->send();
-	}
+            return 'success';
+        }, Guard::EVENT_AUTHORIZED);
 
-	//授权码
-	public function auth_code() {
-		$openPlatform = $this->open_plat_form;
-		$info         = $openPlatform->handleAuthorize($authorizationCode = null);
-		if ($info['authorization_info']) {
-			$ac_info       = $info['authorization_info'];
-			$app_id        = $ac_info['authorizer_appid'];
-			$refresh_token = $ac_info['authorizer_refresh_token'];
-			$all_ac_info   = $openPlatform->getAuthorizer($app_id);
-			$wx_ac_info    = $all_ac_info['authorizer_info'];
-			//授权方公众号类型，0代表订阅号，1代表由历史老帐号升级后的订阅号，2代表服务号
-			$log              = [];
-			$log['wx_app_id'] = $app_id;
-			$log['wx_token']  = $refresh_token;
-			$log['wx_name']   = $wx_ac_info['nick_name'];
-			$log['wx_nick']   = $wx_ac_info['alias'];
-			$log['wx_type']   = 0;//默认是订阅号
-			if ($wx_ac_info['service_type_info']['id'] == 2) {
-				$log['wx_type'] = 1;//服务号
-			}
-			$log['remark']      = '其他的信息json格式存入扩展表';
-			$log['type']        = 1;
-			$log['update_time'] = time();
-			$ac_model           = new WxAccount();
-			$check_id           = $ac_model->select('id')->where(['wx_app_id' => $app_id])->get('id');
-			if ($check_id) {
-				$log['id'] = $check_id;
-				$ac_model->up_acc($log);
-			} else {
-				$log['create_time'] = time();
-				$ac_model->create($log);
-			}
+        // 处理授权更新事件
+        $server->push(function ($message) {
+            $this->authorized($message['AuthorizationCode']);
 
-			$th_model           = new WxThAccount();
-			$log                = [];
-			$log['update_time'] = time();
-			$log['wx_id']       = $app_id;
-			$log['origin_data'] = json_encode($all_ac_info);
-			$log['remark']      = 'json格式存入';
-			$check_id           = $th_model->select('id')->where(['wx_id' => $app_id])->get('id');
-			if ($check_id) {
-				$log['id'] = $check_id;
-				$th_model->up_acc($log);
-			} else {
-				$log['create_time'] = time();
-				$th_model->create($log);
-			}
-			$msg = 'ok';
-		} else {
-			$msg = 'try it again!';
-		}
+            return 'success';
+        }, Guard::EVENT_UPDATE_AUTHORIZED);
 
-		return view(['msg' => $msg]);
-	}
+        // 处理授权取消事件
+        $server->push(function ($message) {
+            $this->unauthorized($message['AuthorizerAppid']);
 
-	//链接
-	public function auth_link() {
-		$openPlatform = $this->open_plat_form;
-		$url          = 'http://wechat.juwang.com/wechat/service/auth_code';
-		$link         = $openPlatform->getPreAuthorizationUrl($url);
+            return 'success';
+        }, Guard::EVENT_UNAUTHORIZED);
 
-		return view(['link' => $link]);
-	}
+        $server->serve()->send();
 
-	public function info() {
-		$openPlatform = $this->open_plat_form;
-//		$appId        = 'wx3ffe452161144cb0';
-//		$refreshToken = 'refreshtoken@@@B8iJ4nYaXywZKPUDNIY83rKImLU2jjmhGuBJ0qQJHEc';
-//		$wx_ac_info   = $openPlatform->getAuthorizer($appId);
-//		echo json_encode($wx_ac_info);
-		//		$officialAccount = $openPlatform->officialAccount($appId, $refreshToken);
-		//		$bg_date         = '2016-08-05';
-		//		$end_date        = '2016-08-05';
-		//		$ret             = $officialAccount->data_cube->articleTotal($bg_date, $end_date);
-		//		$rows            = $ret;
-		//		print_r($rows);
+        return ob_get_clean();
+    }
 
-		return $openPlatform->server->serve()->send();
-	}
+    /**
+     * 扫码授权回调
+     *
+     * @param string $auth_code
+     *
+     * @return \wulaphp\mvc\view\View
+     */
+    public function authorize($auth_code) {
+        $info = $this->authorized($auth_code);
+        if ($info && $info['nick_name']) {
+            $msg = $info['nick_name'];
+        } else {
+            $msg = false;
+        }
 
+        return view(['msg' => $msg]);
+    }
+
+    /**
+     * 授权链接
+     *
+     * @param string $uid
+     *
+     * @return \wulaphp\mvc\view\View
+     */
+    public function grant($uid = '') {
+        $openPlatform = $this->open_plat_form;
+        // 预授权URL
+        if ($uid) {
+            $url = $this->baseURL . App::url('wechat/service/authorize/' . intval($uid));
+        } else {
+            $url = $this->baseURL . App::url('wechat/service/authorize');
+        }
+        $link = $openPlatform->getPreAuthorizationUrl($url);
+
+        return view(['link' => $link]);
+    }
+
+    /**
+     * 用户授权处理.
+     *
+     * @param string $auth_code 授权码
+     * @param bool   $update    是否是更新
+     *
+     * @return array
+     */
+    private function authorized($auth_code, $update = true) {
+        $openPlatform = $this->open_plat_form;
+        $info         = $openPlatform->handleAuthorize($auth_code);
+        if ($info) {
+            if (isset($info['authorization_info']) && $info['authorization_info']) {
+                $ac_info       = $info['authorization_info'];
+                $app_id        = $ac_info['authorizer_appid'];
+                $refresh_token = $ac_info['authorizer_refresh_token'];
+                $access_token  = $ac_info['authorizer_access_token'];
+                $all_ac_info   = $openPlatform->getAuthorizer($app_id);
+                if ($all_ac_info && isset($all_ac_info['authorizer_info'])) {
+                    $wx_ac_info = $all_ac_info['authorizer_info'];
+                    if ($update) {
+                        $acc['name']      = $wx_ac_info['nick_name'];
+                        $acc['wxid']      = $wx_ac_info['alias'] ?? (empty($wx_ac_info['alias']) ? $app_id : $wx_ac_info['alias']);
+                        $acc['origin_id'] = $wx_ac_info['user_name'];
+                        $acc['app_id']    = $app_id;
+                        $acc['platform']  = 'PL';
+                        if ($wx_ac_info['service_type_info']['id'] <= 1) {
+                            $acc['type'] = 'DY';
+                        } else {
+                            $acc['type'] = 'FW';
+                        }
+                        $acc['signature']      = $wx_ac_info['signature'] ?? '';
+                        $acc['principal_name'] = $wx_ac_info['principal_name'] ?? '个人';
+                        $acc['avatar']         = $wx_ac_info['head_img'] ?? '';
+                        $acc['qrcode']         = $wx_ac_info['qrcode_url'] ?? '';
+                        $acc['token']          = rand_str(24);
+
+                        if ($wx_ac_info['verify_type_info']['id'] >= 0) {
+                            $acc['authed'] = 1;
+                        } else {
+                            $acc['authed'] = 0;
+                        }
+
+                        $acc['update_time'] = time();
+                        $acc['update_uid']  = 0;
+                        $wxAccount          = new WxAccountForm();
+                        $db                 = $wxAccount->db();
+                        $db->start();
+                        if ($wxAccount->exist(['app_id' => $app_id], 'id')) {
+                            $rst = $wxAccount->updateAccount($acc, ['app_id' => $app_id]);
+                        } else {
+                            $acc['create_time'] = $acc['update_time'];
+                            $acc['create_uid']  = $acc['update_uid'];
+                            $rst                = $wxAccount->newAccount($acc);
+                        }
+                        if ($rst) {
+                            //更新本次授权数据
+                            $grant['appid']         = $app_id;
+                            $grant['access_token']  = $access_token;
+                            $grant['refresh_token'] = $refresh_token;
+                            $grant['expire']        = time() + (int)($wx_ac_info['expires_in'] ?? 0);
+                            $grant['func_info']     = json_encode($all_ac_info['authorization_info']['func_info']);
+
+                            $wxGrant = new WxGrant();
+                            $rst     = $wxGrant->grant($grant);
+                        } else {
+                            log_error($wxAccount->lastError(), 'authorized');
+                        }
+
+                        if ($rst) {
+                            $db->commit();
+                        } else {
+                            $db->rollback();
+
+                            return [];
+                        }
+                    }
+
+                    return $wx_ac_info;
+                } else {
+                    log_error("获取公众号详细信息失败:\n" . var_export($info, true), 'authorized');
+
+                    return [];
+                }
+            } else {
+                log_error("获取公众号信息失败:\n" . var_export($info, true), 'authorized');
+
+                return [];
+            }
+        } else {
+            log_error('获取公众号信息失败:' . $auth_code, 'authorized');
+        }
+
+        return $info;
+    }
+
+    /**
+     * 取消授权处理.
+     *
+     * @param string $appid
+     */
+    private function unauthorized($appid) {
+        $wxGrant = new WxGrant();
+        $wxGrant->revoke($appid);
+    }
 }

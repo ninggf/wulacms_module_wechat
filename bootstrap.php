@@ -2,8 +2,6 @@
 
 namespace wechat;
 
-use backend\classes\DashboardUI;
-use wechat\classes\jobs\StatCronJob;
 use wula\cms\CmfModule;
 use wulaphp\app\App;
 
@@ -13,66 +11,42 @@ use wulaphp\app\App;
  * @group   cms
  */
 class WechatModule extends CmfModule {
-	public function getName() {
-		return '微信';
-	}
+    public function getName() {
+        return '微信三方';
+    }
 
-	public function getDescription() {
-		return '基于easywechat4.0';
-	}
+    public function getDescription() {
+        return '基于easywechat4.0';
+    }
 
-	public function getHomePageURL() {
-		return '模块的URL';
-	}
+    public function getHomePageURL() {
+        return '';
+    }
 
-	/**
-	 * @param \backend\classes\DashboardUI $ui
-	 *
-	 * @bind dashboard\initUI
-	 */
-	public static function initUI(DashboardUI $ui) {
-		$passport = whoami('admin');
-		if ($passport->cando('m:wechat')) {
-			$menu       = $ui->getMenu('wechat', '微信');
-			$menu->icon = '&#xe63e;';
-			if ($passport->cando('acc:wechat')) {
-				$list              = $menu->getMenu('account', '公众号管理');
-				$list->icon        = '&#xe63e;';
-				$list->data['url'] = App::url('wechat/account');
-			}
-			//			if ($passport->cando('fan:wechat')) {
-			//				$list              = $menu->getMenu('fans', '公众号粉丝');
-			//				$list->icon        = '&#xe630;';
-			//				$list->data['url'] = App::url('wechat/fans');
-			//			}
-			if ($passport->cando('dc:wechat')) {
-				$list              = $menu->getMenu('dc', '数据统计');
-				$list->icon        = '&#xe74d;';
-				$list->data['url'] = App::url('wechat/dc');
-			}
-		}
-	}
+    public function getVersionList() {
+        $v['1.0.0'] = '初始化';
 
-	/**
-	 * @param \wulaphp\auth\AclResourceManager $manager
-	 *
-	 * @bind rbac\initAdminManager
-	 */
-	public static function initAcl($manager) {
-		$acl = $manager->getResource('wechat', '微信', 'm');
-		$acl->addOperate('acc', '公众号管理');
-		//		$acl->addOperate('fan', '公众号粉丝');
-		$acl->addOperate('dc', '数据统计与分析');
-	}
+        return $v;
+    }
 
-	/**
-	 * @param string $h
-	 *
-	 * @bind  crontab_hour
-	 */
-	public static function crontab($h) {
-		StatCronJob::main();
-	}
+    /**
+     * @param \backend\classes\DashboardUI $ui
+     *
+     * @bind dashboard\initUI
+     */
+    public static function initMenu($ui) {
+        $passport = whoami('admin');
+        if ($passport->cando('m:wx')) {
+            $wx = $ui->getMenu('apps/wx', 'Wechat', 1);
+            if ($passport->cando('m:wx/account')) {
+                $acc              = $wx->getMenu('pl', '三方平台', 3);
+                $acc->icon        = '&#xe626;';
+                $acc->iconCls     = 'alicon';
+                $acc->iconStyle   = 'color:orange';
+                $acc->data['url'] = App::url('wechat/account');
+            }
+        }
+    }
 }
 
 App::register(new WechatModule());
